@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Calendar, Trophy, Gift, Zap, Crown, Users, Target, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar, Trophy, Gift, Zap, Crown, Users, Target, Clock, RefreshCw } from 'lucide-react';
+import { useDraftbotLeaderboard } from '@/hooks/useDraftbotLeaderboard';
 
 interface EventsSectionProps {
   language: 'fr' | 'en';
@@ -10,6 +12,7 @@ interface EventsSectionProps {
 
 const EventsSection = ({ language }: EventsSectionProps) => {
   const [timeUntilReset, setTimeUntilReset] = useState('');
+  const { leaderboard, loading, error, refresh } = useDraftbotLeaderboard();
 
   useEffect(() => {
     const updateCountdown = () => {
@@ -109,14 +112,6 @@ const EventsSection = ({ language }: EventsSectionProps) => {
 
   const t = translations[language];
 
-  // Mock leaderboard data
-  const mockLeaderboard = [
-    { rank: 1, name: 'EclipseKing', level: 245, xp: 98500, boost: false },
-    { rank: 2, name: 'ShadowHunter', level: 189, xp: 87300, boost: true },
-    { rank: 3, name: 'LunarWolf', level: 156, xp: 72100, boost: false },
-    { rank: 4, name: 'NightRider', level: 134, xp: 65400, boost: true },
-    { rank: 5, name: 'StarBreaker', level: 98, xp: 45600, boost: false }
-  ];
 
   const getRankColor = (rank: number) => {
     switch (rank) {
@@ -206,51 +201,80 @@ const EventsSection = ({ language }: EventsSectionProps) => {
         {/* Monthly Leaderboard */}
         <Card className="eclipse-card mb-12">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Trophy className="w-5 h-5 text-accent" />
-              <span>{t.leaderboard}</span>
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center space-x-2">
+                <Trophy className="w-5 h-5 text-accent" />
+                <span>{t.leaderboard}</span>
+              </CardTitle>
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline" className="eclipse-badge">
+                  {language === 'fr' ? 'Temps réel' : 'Real-time'}
+                </Badge>
+                <Button 
+                  onClick={refresh} 
+                  variant="ghost" 
+                  size="sm"
+                  disabled={loading}
+                  className="opacity-60 hover:opacity-100"
+                >
+                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {mockLeaderboard.map((player) => (
-                <div
-                  key={player.rank}
-                  className={`flex items-center justify-between p-4 rounded-xl transition-all duration-300 hover:scale-105 ${
-                    player.rank <= 3 ? 'eclipse-glow' : 'bg-secondary/30'
-                  }`}
-                  style={{
-                    background: player.rank <= 3 ? `linear-gradient(135deg, ${getRankColor(player.rank).split(' ')[1]}, ${getRankColor(player.rank).split(' ')[3]})` : undefined
-                  }}
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-2xl">{getRankIcon(player.rank)}</span>
-                      <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${getRankColor(player.rank)} flex items-center justify-center text-white font-bold`}>
-                        {player.rank}
-                      </div>
-                    </div>
-                    <div>
+            {loading && leaderboard.length === 0 ? (
+              <div className="flex items-center justify-center py-8">
+                <RefreshCw className="w-6 h-6 animate-spin text-primary" />
+                <span className="ml-2 text-muted-foreground">
+                  {language === 'fr' ? 'Chargement du classement...' : 'Loading leaderboard...'}
+                </span>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center py-8 text-destructive">
+                {error}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {leaderboard.slice(0, 10).map((player) => (
+                  <div
+                    key={player.rank}
+                    className={`flex items-center justify-between p-4 rounded-xl transition-all duration-300 hover:scale-105 ${
+                      player.rank <= 3 ? 'eclipse-glow' : 'bg-secondary/30'
+                    }`}
+                    style={{
+                      background: player.rank <= 3 ? `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))` : undefined
+                    }}
+                  >
+                    <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
-                        <span className="font-bold text-lg">{player.name}</span>
-                        {player.boost && (
-                          <Badge variant="outline" className="text-xs">
-                            <Zap className="w-3 h-3 mr-1" />
-                            Boost
-                          </Badge>
-                        )}
+                        <span className="text-2xl">{getRankIcon(player.rank)}</span>
+                        <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${getRankColor(player.rank)} flex items-center justify-center text-white font-bold`}>
+                          {player.rank}
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {t.level} {player.level} • {player.xp.toLocaleString()} XP
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-bold text-lg">{player.name}</span>
+                        </div>
+                        <div className="text-sm text-muted-foreground mb-2">
+                          {t.level} {player.level} • {player.totalXp.toLocaleString()} XP
+                        </div>
+                        <div className="w-48 bg-muted rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-primary to-primary-glow h-2 rounded-full transition-all"
+                            style={{ width: `${(player.currentXp / (player.currentXp + player.nextLevelXp)) * 100}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {player.currentXp}/{player.currentXp + player.nextLevelXp} XP {language === 'fr' ? 'au prochain niveau' : 'to next level'}
+                        </p>
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <Progress value={(player.xp / 100000) * 100} className="w-24 h-2" />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 

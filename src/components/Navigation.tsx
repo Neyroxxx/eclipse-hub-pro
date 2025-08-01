@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Moon, Sun, Globe, Menu, X } from 'lucide-react';
+import { Moon, Sun, Globe, Menu, X, Shield } from 'lucide-react';
+import AdminPanel from './AdminPanel';
 
 interface NavigationProps {
   language: 'fr' | 'en';
@@ -10,6 +11,7 @@ interface NavigationProps {
 const Navigation = ({ language, onLanguageChange }: NavigationProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,21 +49,33 @@ const Navigation = ({ language, onLanguageChange }: NavigationProps) => {
   };
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isScrolled ? 'eclipse-card backdrop-blur-md' : 'bg-transparent'
-    }`}>
-      <div className="container mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-primary-glow flex items-center justify-center eclipse-glow">
-              <Moon className="w-6 h-6 text-white" />
+    <>
+      {showAdminPanel && <AdminPanel />}
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled ? 'eclipse-card backdrop-blur-md' : 'bg-transparent'
+      }`}>
+        {/* Admin Button - Top Left */}
+        <Button
+          onClick={() => setShowAdminPanel(!showAdminPanel)}
+          variant="ghost"
+          size="sm"
+          className="fixed top-4 left-4 z-60 opacity-50 hover:opacity-100 transition-opacity eclipse-card"
+        >
+          <Shield className="w-4 h-4" />
+        </Button>
+
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center space-x-3 ml-16">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-primary-glow flex items-center justify-center eclipse-glow">
+                <Moon className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold gradient-text">HOKKAIDO ECLIPSE</h1>
+                <p className="text-xs text-muted-foreground">Elite Gaming Community</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold gradient-text">HOKKAIDO ECLIPSE</h1>
-              <p className="text-xs text-muted-foreground">Elite Gaming Community</p>
-            </div>
-          </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
@@ -174,8 +188,9 @@ const Navigation = ({ language, onLanguageChange }: NavigationProps) => {
             </div>
           </div>
         )}
-      </div>
-    </nav>
+        </div>
+      </nav>
+    </>
   );
 };
 

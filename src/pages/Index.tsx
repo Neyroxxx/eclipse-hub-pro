@@ -78,8 +78,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Admin Panel */}
-      <AdminPanel />
 
       {/* Navigation */}
       <Navigation language={language} onLanguageChange={setLanguage} />
